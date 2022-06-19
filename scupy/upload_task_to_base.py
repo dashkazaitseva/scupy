@@ -13,15 +13,15 @@ my_own_task = {
     "task_text": "сложите два числа",
     "task_solution_code_analytics":
         """
-        a = 1
-        b = 5
-        print(a + b)
+a = 1
+b = 5
+print(a + b)
         """,
     "task_solution_code":
         """
-        a = 1
-        b = 5
-        print(sum(a, b))
+a = 1
+b = 5
+print(sum(a, b))
         """
 }
 new_task = json.dumps(my_own_task, ensure_ascii=False)
