@@ -1,6 +1,3 @@
-### посмотреть как катать можно тут
-https://colab.research.google.com/drive/1yO8HsLVC6UT2CNVnUrK_GdqaVbCnBihb#scrollTo=X2qjYVlMjywb
-
 ### Для юзеров
 * Даш, как скатать?
 * выбираете самое необычное слово в задаче (слово "найдите" точно плохое, слово "ученики" норм)
