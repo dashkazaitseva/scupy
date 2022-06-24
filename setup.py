@@ -8,7 +8,7 @@ Created on Sat Jun 18 18:07:05 2022
 from setuptools import setup, find_packages
 long_description= '''Library for the 3 semester'''
 setup(name='scupy',
-      version='0.0.32',
+      version='0.0.39',
       url='https://github.com/dashkazaitseva',
       packages=['scupy'],
       license='MIT',

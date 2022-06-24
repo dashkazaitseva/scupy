@@ -60,8 +60,9 @@ def get_task_by_id(id: int) -> Union['Task', str]:
 
 def find_by_words(words: str, unit: Optional[str] = None):
     words = words.split()
+    words = [w.lower().replace("ё","е") for w in words]
     all_tasks = load_all_tasks()
-    counter = [0 for _ in range(len(all_tasks) + 4)]
+    counter = [0 for _ in range(max([task.id for task in all_tasks]) + 4)]
     for task in all_tasks:
         task_words = task.task_text.translate(str.maketrans('', '', string.punctuation))
         task_words = task_words.split(" ")
@@ -69,15 +70,16 @@ def find_by_words(words: str, unit: Optional[str] = None):
         for word in words:
             if word in task_words:
                 counter[task.id] += 1
-
+    all_tasks_by_id = {task.id: task for task in all_tasks}
     c = [[counter[i], i] for i in range(len(counter))]
     c.sort(reverse=True)
     for el in c:
         if el[0] > 0:
             i = el[1]
-            text = all_tasks[i - 1].task_text
+            task = all_tasks_by_id[i]
+            text = task.task_text
             if unit:
-                if all_tasks[i - 1].unit == unit:
+                if task.unit == unit:
                     print(i, "\n".join([text[128 * i:128 * (i + 1)] for i in range(0, (len(text) - 1) // 128 + 1)]))
             else:
                 print(i, "\n".join([text[128*i:128*(i + 1)] for i in range(0, (len(text) - 1) // 128 + 1)]))
@@ -971,3 +973,689 @@ $$
 $$
            """))
 
+
+
+
+def equalsigma():
+    display(Markdown(r"""
+Воспользуемся $\chi^2$-критерием
+
+1) Статистика критерия:
+
+$$
+\chi^2_0=\frac{1}{\sigma^2_0}\sum^n_{k=1}\left(X_k-\bar X\right)^2=\frac{(n-1)\delta^2}{\sigma^2_0}, \text{ где } \delta^2 = \frac{1}{n-1}\sum^n_{k=1}\left(X_k-\bar X \right)^2
+$$
+
+$$
+K_{\alpha}, \text{ для } H_0: \sigma = \sigma_0; H_1: \sigma > \sigma_0: \chi^2_0 > \chi^2_{\alpha}(n-1)
+$$
+
+2) Если $H_0$ - верна, то с.в. $\chi^2 \sim \chi^2(n-1)$
+
+$X_1,...,X_n \sim N(\mu;\sigma^2)$
+
+$\chi^2=\frac{1}{\sigma^2_0}\sum^n_{k=1}(X_k-\bar X)^2 = \sum^n_{k=1}\left(\frac{X_k-\bar X}{\sigma_0} \right)^2 = \sum^n_{k=1}Z^2_k, \text{ где } Z_k = \frac{X_k=\bar X}{\sigma_0}$ 
+
+a) $Cov(Z_i,Z_j)=-\frac{1}{n} (i\not=j)$
+
+b) $Z_1+...+Z_n = 0$
+
+c) $\sum^n_{k=1}(X_k-\mu)^2 = \sum^n_{k=1}(X_k-\bar X)^2 +n(\bar X[k=1] - \mu)^2$
+
+3) Так как в силу вида $H_1 k_{\alpha}$ правостор., тогда P-значение - вероятность того, что основная статистика более экстремальной, чем наблюдаемое значение статистики, т.е
+
+$$
+pv(\bar x) = P\left(\chi^2_0 > \chi^2_{набл}(n) \right) = 1-P\left(\chi^2_0 < \chi^2_{набл}(n) \right) = F_{\chi^2_0}(\chi^2_{набл})
+$$         """))
+
+def equalsigmaless():
+    display(Markdown(r"""
+1) Воспользуемся следующим критерием:
+
+$\chi^2=\frac{1}{\sigma^2_0}\cdot \sum^n_{k=1}(X_k-\bar X)^2$
+
+$k_{\alpha}=\{\bar X \in \mathbb R^n | 0<\chi^2<\chi^2_{1-\alpha}(n-1)\}$
+
+2) Если $H_0$ - верна, то $\chi^2 \sim \chi^2(n-1)$
+
+Док-во:
+
+$$
+\chi^2 = \frac{1}{\sigma^2_0}\cdot \sum^n_{k=1}(X_k-\bar X)^2 = \frac{n-1}{\sigma^2_0}\cdot \frac{1}{n-1}\cdot \sum^n_{k=1}(X_k-\bar X)^2 = \frac{(n-1)S^2}{\sigma^2_0} \sim [\text{по теореме Фишера}] \chi^2(n-1)
+$$
+
+$P_{H_0}\left(T(X_1,....,X_n) \in k_{\alpha} \right) = P_{H_0}\left(\frac{1}{\sigma^2_0} \sum^n_{k=1}(X_k-\bar X)^2 \in (0;\chi^2_{1-\frac{\alpha}{2}}(n-1)) \cup (\chi^2_{\frac{\alpha}{2}}(n-1);+\inf) \right) = P_{H_0}\left(0<\chi^2(n-2)<\chi^2_{1-\frac{\alpha}{2}}(n-1) \right) + P_{H_0}\left(\chi^2(n-1)>\chi^2_{\frac{\alpha}{2}}(n-2) \right) = P\left(\chi^2(n-1)>0 \right) - P\left(\chi^2(n-1)>\chi^2_{1-\frac{\alpha}{2}}(n-1) \right)$
+
+3) $Pvalue = 2min\{P_{H_0}\left(T(X_1,...,X_n)<\chi^2_{набл} \right); P_{H_0}\left(T(X_1,...,X_n)>\chi^2_{набл} \right) \} = 2min\{P\left(\chi^2(n-2) <\chi^2_{набл}\right ); P\left(\chi^2(n-2) >\chi^2_{набл}\right )\} = 2min\{F_{\chi^2(n-2)}\left(\frac{1}{\sigma^2_0} \sum^n_{k=1}(X_k-\bar X)^2 \right); 1-F_{\chi^2(n-1)}\left(\frac{1}{\sigma^2_0}\sum^n_{k=1}(X_k - \bar X)^2 \right) \}$ 
+"""))
+
+def bothsigmas():
+    display(Markdown(r"""
+1) Воспользуемся следующим критерием:
+
+$\chi^2=\frac{1}{\sigma^2_0}\cdot \sum^n_{k=1}(X_k-\bar X)^2$
+
+$k_{\alpha}=\{\bar X \in \mathbb R | \chi^2_{1-\frac{\alpha}{2}}(n-1)>\chi^2 \cup \chi^2>\chi^2_{\frac{\alpha}{2}}(n-1)\}, \text{ где } \chi^2_{\alpha}(n-1) - \text{ процентная точка уровня } \alpha \text{ для } \chi^2 \sim \chi^2(n-1)$
+
+2) Если $H_0$ - верна, то $\chi^2 \sim \chi^2(n-1)$
+
+Док-во:
+
+$$
+\chi^2 = \frac{1}{\sigma^2_0}\cdot \sum^n_{k=1}(X_k-\bar X)^2 = \frac{n-1}{\sigma^2_0}\cdot \frac{1}{n-1}\cdot \sum^n_{k=1}(X_k-\bar X)^2 = \frac{(n-1)S^2}{\sigma^2_0} \sim [\text{по теореме Фишера}] \chi^2(n-1)
+$$
+
+$P_{H_0}\left(T(X_1,....,X_n) \in k_{\alpha} \right) = P_{H_0}\left(\frac{1}{\sigma^2_0} \sum^n_{k=1}(X_k-\bar X)^2 \in (0;\chi^2_{1-\alpha}(n-1)) \right) = P_{H_0}\left(0<\chi^2(n-1)<\chi^2_{1-\alpha}(n-1) \right) = P(\chi^2(n-1)>0)-P(\chi^2(n-1)>\chi^2_{1-\alpha}(n-1)) = 1-(1-\alpha) = \alpha$
+
+3) $Pvalue = P_{H_0}(T(X_1,...,X_n)<\chi^2_{набл}) = P_{H_0}\left(\frac{1}{\sigma^2_0}\sum^n_{k=1} (X_k-\bar X)^2 < \chi^2_{набл} \right) = P\left(\chi^2(n-2) < \chi^2_{набл} \right) = F_{\chi^2(n-1)}\left(\frac{1}{\sigma^2_0}\sum^n_{k=1}(X_k-\bar X)^2 \right)$
+"""))
+
+def musix():
+    display(Markdown(r"""
+1) Рассмотрим статистику:
+
+$$
+Z = \frac{\bar X - \bar Y}{\sqrt{\frac{\sigma^2_X}{n} + \frac{\sigma^2_Y}{m}}}; k_{\alpha} = \{\vec{X} \in \mathbb R^{n+m} | T\left(X_1,...,X_n,Y_1,...,Y_m \right) > Z_{\frac{\alpha}{2}} \}
+$$
+
+где $Z_{\frac{\alpha}{2}}$ - процентная точка стандартного ормального
+
+2) Если $H_0$ - верна, то $\frac{\bar X - \bar Y}{\sqrt{\frac{\sigma^2_X}{n} + \frac{\sigma^2_Y}{m}}} \sim Norm(0,1)$
+
+Док-во:
+
+a) $\frac{1}{\sqrt{\frac{\sigma^2_X}{n} + \frac{\sigma^2_Y}{m}}}[\bar X - \bar Y]$ - линейнка комбинация нормальных распределений
+
+б) $E\left(\frac{1}{\sqrt{\frac{\sigma^2_X}{n} + \frac{\sigma^2_Y}{m}}}[\bar X - \bar Y] \right) = \frac{1}{\sqrt{\frac{\sigma^2_X}{n} + \frac{\sigma^2_Y}{m}}}E\left([\bar X - \bar Y]\right) = \frac{\mu_X-\mu_Y}{\sqrt{\frac{\sigma^2_X}{n} + \frac{\sigma^2_Y}{m}}} = \{H_0: \mu_X=\mu_Y \} = 0$
+
+в) $Var\left(\frac{1}{\sqrt{\frac{\sigma^2_X}{n} + \frac{\sigma^2_Y}{m}}}[\bar X - \bar Y] \right) = \frac{1}{\sqrt{\frac{\sigma^2_X}{n} + \frac{\sigma^2_Y}{m}}}[Var(\bar X) - Var(\bar Y)] = \frac{1}{\frac{\sigma^2_X}{n}+\frac{\sigma^2_Y}{m}}[\frac{\sigma^2_X}{n}+\frac{\sigma^2_Y}{m}] = 1$
+
+Из 1,2,3 $\Rightarrow$, что $\frac{\bar X - \bar Y}{\sqrt{\frac{\sigma^2_X}{n} + \frac{\sigma^2_Y}{m}}} \sim Norm(0,1)$
+
+$$
+P_{H_0}\left(T(X_1,...,Y_m) \in k_{\alpha} \right) = P\left(|Z|>Z_{\frac{\alpha}{2}} \right) = P\left(Z>Z_{\frac{\alpha}{2}} \right) + P\left(Z<-Z_{\frac{\alpha}{2}} \right) = \frac{\alpha}{2} + \frac{\alpha}{2} = \alpha.
+$$
+
+3) $Pvalue = 2min\{P(Z<Z_{набл}); P(Z>Z_{набл}) \} = \{\text{ В случае четности плотности } Z\sim Norm(0,1) \} = 2F_Z(-|Z_{набл}|)= 1+2Ф_0(-|Z_{набл}|)$
+"""))
+
+
+def muisgreater():
+    display(Markdown(r"""
+1) Рассмотрим $T(X_1,...,X_n,Y_1,...,Y_m) = \frac{\bar X - \bar Y}{S\cdot \sqrt{\frac{1}{n}+\frac{1}{m}}}$; где $S = \frac{\sum^n_{k=1}(X_k-\bar X)^2 + \sum^m_{k=1}(Y_k-\bar Y)^2}{n+m-2}$
+
+$$
+k_{\alpha} = \{\vec{X} \in \mathbb R^{n+m} |  \frac{\bar X - \bar Y}{S\cdot \sqrt{\frac{1}{n}+\frac{1}{m}}} > t_{\alpha}(m+n-2)\}
+$$
+
+2) Если $H_0$ - верна, то $\frac{\bar X - \bar Y}{S\cdot \sqrt{\frac{1}{n}+\frac{1}{m}}} \sim T(n+m-2)$
+
+Док-во:
+
+a) $\frac{\bar X - \bar Y}{\sigma\cdot \sqrt{\frac{1}{n}+\frac{1}{m}}} / \frac{S}{\sigma}; \frac{1}{\sigma\cdot \sqrt{\frac{1}{n}+\frac{1}{m}}}[\bar X - \bar Y]$ - линейная комбинация нормальных распределений.
+
+б) $E[\frac{\bar X - \bar Y}{\sigma\cdot \sqrt{\frac{1}{n}+\frac{1}{m}}}] = \frac{1}{\sigma\cdot \sqrt{\frac{1}{n}+\frac{1}{m}}}E[\bar X - \bar Y] = \{H_0 - верна \} = 0$
+
+в) $Var[\frac{\bar X - \bar Y}{\sigma\cdot \sqrt{\frac{1}{n}+\frac{1}{m}}}] = \frac{1}{\sigma\cdot \sqrt{\frac{1}{n}+\frac{1}{m}}}[Var(\bar X) - Var(\bar Y)] = \frac{m\cdot n}{\sigma^2\cdot (m+n)}\cdot [\frac{\sigma^2}{n}+\frac{\sigma^2}{m}] = 1$
+
+из 1,2,3 $\Rightarrow$, что $\frac{\bar X - \bar Y}{\sigma\cdot \sqrt{\frac{1}{n}+\frac{1}{m}}} = Z\sim Norm(0,1)$
+
+г) $\frac{S^2}{\sigma^2} = \frac{m+n-2}{\sigma^2}\cdot \frac{S^2}{n+m-2}; \frac{m+n-2}{\sigma^2}\cdot S^2 = \frac{1}{\sigma^2} \sum^n_{k=1}(X_k-\bar X)^2 + \frac{1}{\sigma^2}\sum^m_{k=1}(Y_k-\bar Y)^2 =\{\text{Пользуясь теоремой Фишера} \} = \chi^2(n-1)+\chi^2(m-1)=\chi^2(n+m-2)$
+
+д) Итак, $\frac{\bar X - \bar Y}{S\cdot \sqrt{\frac{1}{n}+\frac{1}{m}}} = \frac{\bar X - \bar Y}{\sigma\cdot \sqrt{\frac{1}{n}+\frac{1}{m}}} / \frac{S}{\sigma} = \frac{Z}{\sqrt{\frac{\chi^2(n+m-2)}{n+m-2}}}\sim T(n+m-2)$
+
+$$
+P_{H_0}\left(\frac{\bar X - \bar Y}{S\cdot \sqrt{\frac{1}{n}+\frac{1}{m}}} \in k_{\alpha} \right) = P\left(T>t_{\alpha}(n+m-2) \right) =^{def} \alpha
+$$
+
+3) $Pvalue = P_{H_0}\left(\frac{\bar X - \bar Y}{S\cdot \sqrt{\frac{1}{n}+\frac{1}{m}}}>t_{набл} \right) = P\left(T>t_{набл} \right) = 1 - P\left(T\leq t_{набл} \right) = 1 - F_{t(n+m-2)}(t_{набл})$
+"""))
+
+def muisgreater():
+    display(Markdown(r"""
+1) Рассмотрим $T(X_1,...,X_n,Y_1,...,Y_m) = \frac{\bar X - \bar Y}{S\cdot \sqrt{\frac{1}{n}+\frac{1}{m}}}$; где $S = \frac{\sum^n_{k=1}(X_k-\bar X)^2 + \sum^m_{k=1}(Y_k-\bar Y)^2}{n+m-2}$
+
+$$
+k_{\alpha} = \{\vec{X} \in \mathbb R^{n+m} |  \frac{\bar X - \bar Y}{S\cdot \sqrt{\frac{1}{n}+\frac{1}{m}}} > t_{\frac{\alpha}{2}}(m+n-2)\}
+$$
+
+2) Если $H_0$ - верна, то $\frac{\bar X - \bar Y}{S\cdot \sqrt{\frac{1}{n}+\frac{1}{m}}} \sim T(n+m-2)$
+
+Док-во:
+
+a) $\frac{\bar X - \bar Y}{\sigma\cdot \sqrt{\frac{1}{n}+\frac{1}{m}}} / \frac{S}{\sigma}; \frac{1}{\sigma\cdot \sqrt{\frac{1}{n}+\frac{1}{m}}}[\bar X - \bar Y]$ - линейная комбинация нормальных распределений.
+
+б) $E[\frac{\bar X - \bar Y}{\sigma\cdot \sqrt{\frac{1}{n}+\frac{1}{m}}}] = \frac{1}{\sigma\cdot \sqrt{\frac{1}{n}+\frac{1}{m}}}E[\bar X - \bar Y] = \{H_0 - верна \} = 0$
+
+в) $Var[\frac{\bar X - \bar Y}{\sigma\cdot \sqrt{\frac{1}{n}+\frac{1}{m}}}] = \frac{1}{\sigma\cdot \sqrt{\frac{1}{n}+\frac{1}{m}}}[Var(\bar X) - Var(\bar Y)] = \frac{m\cdot n}{\sigma^2\cdot (m+n)}\cdot [\frac{\sigma^2}{n}+\frac{\sigma^2}{m}] = 1$
+
+из 1,2,3 $\Rightarrow$, что $\frac{\bar X - \bar Y}{\sigma\cdot \sqrt{\frac{1}{n}+\frac{1}{m}}} = Z\sim Norm(0,1)$
+
+г) $\frac{S^2}{\sigma^2} = \frac{m+n-2}{\sigma^2}\cdot \frac{S^2}{n+m-2}; \frac{m+n-2}{\sigma^2}\cdot S^2 = \frac{1}{\sigma^2} \sum^n_{k=1}(X_k-\bar X)^2 + \frac{1}{\sigma^2}\sum^m_{k=1}(Y_k-\bar Y)^2 =\{\text{Пользуясь теоремой Фишера} \} = \chi^2(n-1)+\chi^2(m-1)=\chi^2(n+m-2)$
+
+д) Итак, $\frac{\bar X - \bar Y}{S\cdot \sqrt{\frac{1}{n}+\frac{1}{m}}} = \frac{\bar X - \bar Y}{\sigma\cdot \sqrt{\frac{1}{n}+\frac{1}{m}}} / \frac{S}{\sigma} = \frac{Z}{\sqrt{\frac{\chi^2(n+m-2)}{n+m-2}}}\sim T(n+m-2)$
+
+$$
+P_{H_0}\left(\frac{\bar X - \bar Y}{S\cdot \sqrt{\frac{1}{n}+\frac{1}{m}}} \in k_{\alpha} \right) = P\left(|T|>t_{\frac{\alpha}{2}}(n+m-2) \right) = P\left(T<-t_{\frac{\alpha}{2}}(n+m-2) \right) + P\left(T>t_{\frac{\alpha}{2}}(n+m-2) \right) = 1- P\left(T>t_{1-\frac{\alpha}{2}}(n+m-2) \right) + \frac{\alpha}{2} = 1 - 1 + \frac{\alpha}{2} + \frac{\alpha}{2} = \alpha
+$$
+
+3) $Pvalue = 2min\left(P_{H_0}\left(\frac{\bar X - \bar Y}{S\cdot \sqrt{\frac{1}{n} + \frac{1}{m}}} < t_{набл} \right);P_{H_0}\left(\frac{\bar X - \bar Y}{S\cdot \sqrt{\frac{1}{n} + \frac{1}{m}}} > t_{набл} \right)  \right) = 2min\left(F_{t(n+m-2)}(t_{набл}); 1-(F_{t(n+m-2)}(t_{набл}) \right) = 2P\left(T(n+m-2)\leq-|t_{набл}| \right) = 2F_{t(n+m-2)}(-|t_{набл}|) = 2F_{t(n+m-2)}\left(-\frac{|\bar X - \bar Y|}{S^2\sqrt{\frac{1}{n}+ \frac{1}{m}}} \right)$
+"""))
+
+def behrensfisher():
+    display(Markdown(r"""
+1) Рассмотрим статистику Уэлча:
+
+$$
+T(X_1,...,Y_m) = \frac{\bar X - \bar Y}{\sqrt{\frac{1}{n(n-1)}\sum^n_{k=1}(X_k-\bar X)^2+\frac{1}{m(m-1)}\sum^m_{k=1}(Y_k-\bar Y)^2}}; \hat{f} = \frac{\left(\frac{S^2_X}{S^2_Y}+\frac{n}{m} \right)^2}{\frac{1}{n-1}\cdot \frac{S^2_X}{S^2_Y} + \frac{1}{m-1}(\frac{n}{m})^2}
+$$
+
+$$
+k_{\alpha} = \{\vec{x} \in \mathbb R^{n+m} ||T(X_1,...,Y_m)|>t_{\frac{\alpha}{2}}(\hat{f}) \}; t_{\frac{\alpha}{2}}(\hat f) - \text{ процентная точка распределения стьюдента с дробным числом степеней свободы}
+$$
+
+2) Если $H_0$ - верна, то $T\left(X_1,...,Y_m\right) \approx t(\hat f)$ - т.е. Статистика ведет себя как распределение Стьюдента с числом свободы f.
+
+$
+f = \frac{\left(\frac{\sigma^2_X}{\sigma^2_Y}+\frac{n}{m} \right)^2}{\frac{1}{n-1}\cdot \frac{\sigma^2_X}{\sigma^2_Y} + \frac{1}{m-1}(\frac{n}{m})^2}
+$
+
+3) $Pvalue = 2min\left(P_{H_0}(T(X_1,...,Y_m)>t_{набл}); P_{H_0}(T(X_1,...,Y_m)<t_{набл}) \right)= \{\text{ в силу четности плотности и если взять t_набл по модулю, то min сохраняется и при этом обязательнго равны } \} = 2min\left(P_{H_0}(T(X_1,...,Y_m)>|t_{набл}|); P_{H_0}(T(X_1,...,Y_m)<-|t_{набл}|)\right) = 2P_{H_0}\left(T(X_1,...,Y_m) <-|t_{набл}| \right) = 2F_{t(\hat f)}(-|t_{набл}|)$
+"""))
+
+def sigmaequalgreat():
+    display(Markdown(r"""
+1) Рассмотрим F-статистику:
+
+$$
+T(X_1,...,Y_m) = \frac{S^2_X}{S^2_Y} = \frac{\frac{1}{n-1}\sum^n_{k=1}\left(X_k-\bar X \right)^2}{\frac{1}{m-1}\sum^m_{k=1}\left(Y_k-\bar Y \right)^2}
+$$
+
+$$
+k_{\alpha} = \{\vec{X} \in R^{n+m} | T(X_1,...,Y_m)>f_{\alpha}(n-1;m-1) \}, \text{ где } f_{\alpha}(n-1;m-1) \text{ - процентная точка распределения Фишера}
+$$
+
+2) Если $H_0$ - верна, то $\frac{S^2_X}{S^2_Y}\sim F(n-1;m-1)$
+
+Док-во:
+
+$$
+\frac{S^2_X}{S^2_Y} = \frac{\frac{n-1}{\sigma}S^2_X\cdot \frac{1}{n-1}}{\frac{m-1}{\sigma}S^2_Y\cdot \frac{1}{m-1}} = \frac{\chi^2(n-1)}{\chi^2(m-1)}\cdot \frac{m-1}{n-1} =^{def}F\sim F(n-1;m-1) \text{ чтд }
+$$
+
+
+$P_{H_0}\left(T(X_1,...,Y_m) \in k_{\alpha} \right) = \alpha$
+
+Док-во:
+
+$$
+P\left(\frac{S^2_X}{S^2_Y} > f_{\alpha}(n-1;m-1) \right) = P\left(F_{n-1;m-1} > f_{\alpha}(n-1;m-1)\right) =^{def} \alpha
+$$
+
+3)$Pvalue = \mathbb P_{H_0}\left(T(X_1,...,Y_m) > \mathbb F_{набл} \right) = 1-\mathbb P\left(\mathbb F\leq \mathbb F_{набл} \right) = 1-F_{\mathbb F(n-1;m-1)}\left(\frac{S^2_X}{S^2_Y} \right)$
+"""))
+
+def sigmaequalsix():
+    display(Markdown(r"""
+1) Рассмотрим F-статистику:
+
+$$
+T(X_1,...,Y_m) = \frac{S^2_X}{S^2_Y} = \frac{\frac{1}{n-1}\sum^n_{k=1}\left(X_k-\bar X \right)^2}{\frac{1}{m-1}\sum^m_{k=1}\left(Y_k-\bar Y \right)^2}
+$$
+
+$$
+k_{\alpha} = \{\vec{X} \in R^{n+m} | T(X_1,...,Y_m) \in (0;f_{1-\frac{\alpha}{2}}(n-1;m-1))\cup(f_{\frac{\alpha}{2}}(n-1,m-1);+\infty) \}, \text{ где } f_{\alpha}(n-1;m-1) \text{ - процентная точка распределения Фишера}
+$$
+
+2) Если $H_0$ - верна, то $\frac{S^2_X}{S^2_Y}\sim F(n-1;m-1)$
+
+Док-во:
+
+$$
+\frac{S^2_X}{S^2_Y} = \frac{\frac{n-1}{\sigma}S^2_X\cdot \frac{1}{n-1}}{\frac{m-1}{\sigma}S^2_Y\cdot \frac{1}{m-1}} = \frac{\chi^2(n-1)}{\chi^2(m-1)}\cdot \frac{m-1}{n-1} =^{def}F\sim F(n-1;m-1) \text{ чтд }
+$$
+
+
+$\mathbb P_{H_0}\left(T(X_1,...,Y_m) \in k_{\alpha} \right) = \alpha$
+
+Док-во:
+
+$$
+\mathbb P\left(\frac{S^2_X}{S^2_Y} \in (0;f_{1-\frac{\alpha}{2}}(n-1;m-1))\cup (f_{\frac{\alpha}{2}}(n-1;m-1);+\infty) \right) = \mathbb P\left(\mathbb F<f_{1-\frac{\alpha}{2}} \right) + \mathbb P\left(\mathbb F>f_{1-\frac{\alpha}{2}} \right) = 1-\mathbb P(\mathbb F > f_{1-\frac{\alpha}{2}}) + \mathbb P(\mathbb F > f_{\frac{\alpha}{2}}) = 1-1+\frac{\alpha}{2}+\frac{\alpha}{2} = \alpha
+$$
+
+3)$Pvalue = 2min\left(\mathbb P_{H_0}(T(X_1,...,Y_m)>\mathbb F_{набл}); \mathbb P_{H_0}(T(X_1,...,Y_m)<\mathbb F_{набл}) \right) = 2min\{1- \mathbb P(\mathbb F\leq \mathbb F_{набл}); \mathbb P(\mathbb F \leq \mathbb F_{набл}) \} = 2min\{(1-F_{\mathbb F(n-1;m-1)}(\frac{S^2_X}{S^2_Y}); F_{\mathbb F(n-1;m-1)}(\frac{S^2_X}{S^2_Y})) \}$
+"""))
+
+def studentnm2():
+    display(Markdown(r"""
+1) $T(X_1,...,Y_m) = \mathbb F = \frac{MSTR}{MSE} = \frac{\frac{SSTR}{(2-1)}}{\frac{SSE}{n+m-2}} = \frac{(\bar X - \bar Y)^2}{S^2_p(\frac{1}{n}+\frac{1}{m})} = \mathbb T^2$ - статистика в квадрате
+
+где $S^2_p = \frac{1}{n+m-2}\left((n-1)S^2_X+(m-1)S^2_Y \right)$
+
+$$
+k_{\alpha} = \{\vec{X} \in \mathbb R^{n+m} | T(X_1,...,Y_m) > f_{\alpha}(1;n+m-2) \}
+$$
+
+2) $\mathbb P \left(\mathbb F > f_{\alpha}(1;n+m-2) \right) = \{n+m-2 = a \} = \mathbb P\left(\frac{\chi^2(1)\cdot a}{\chi^2(a)}>f_{\alpha}(1;a) \right) = \mathbb P\left(\frac{\mathcal{Z}^2}{\frac{1}{a}\sum^a_{k=1}\mathcal Z^2_k}> f_{\alpha}(1;a) \right) = \mathbb P\left(\frac{|\mathcal Z|}{\sqrt{\frac{1}{a}\sum^a_{k=1}\mathcal Z^2_k}} > \sqrt{f_{\alpha}(1;a)} \right) = \mathbb P\left(-\sqrt{f_{\alpha}(1;a)}<\frac{\mathcal Z}{\sqrt{\frac{1}{a}\sum^a_{k=1}\mathcal Z^2_k}} < \sqrt{f_{\alpha}(1;a)} \right) = $
+
+$\begin{matrix}
+\mathbb P\left(-\sqrt{f_{\alpha}(1;a)} < t < \sqrt{f_{\alpha}(1;a)}\right) = \alpha\\
+\mathbb P\left(-t_{\frac{\alpha}{2}}(a) < t < t_{\frac{\alpha}{2}}(a) \right) = \alpha
+\end{matrix} \Rightarrow \{\text{ в силу монотонности } \} \begin{matrix}
+F^{-1}_{t}(x)\\
+\sqrt{f_{\alpha}(1;a)}=t_{\frac{\alpha}{2}}(a)
+\end{matrix} \Rightarrow$
+
+$$
+f_{\alpha}(1;n+m-2) = t^2_{\frac{\alpha}{2}}(n+m-2)
+$$
+"""))
+def pearsoncriteria():
+    display(Markdown(r"""
+1) Выборки $X_1,...,X_n$ называется однородными, если они распределены одинаковы, т.е. $F_{X_1}=F_{X_2}=...=F_{X_n}$
+2) Статистика: $T(\vec{X_1},...,\vec{X_n}) = \chi^2_0 = n\cdot \left((\sum^l_{i=1}\frac{1}{\nu_i}\cdot \sum^k_{j=1}\frac{\nu^2_{ij}}{n_j})-1 \right)$
+
+$$
+k_{\alpha} = \{\vec X \in \mathbb R^n | \chi^2_0 > \chi^2_{\alpha}\left((k-1)\cdot(l-1) \right) \}
+$$
+3) Однородность двух выборок:
+$m = \sum^l_{i=1}\alpha_i = \sum^l_{i=1}\nu_{i1}$
+
+$n = \sum^l_{j=1}\beta_j = \sum^l_{j=1}\nu_{j2}$
+
+$n_1 = m; n_2 = n$
+
+$$
+\chi^2_0=N\left((\sum^l_{i=1}\frac{1}{\nu_i}\sum^2_{j=1}\frac{\nu^2_{ij}}{n_j}) - 1 \right)
+$$
+"""))
+
+def conttablechi():
+    display(Markdown(r"""
+1) Пусть $\hat p_i = \frac{\alpha_i}{n}; \hat q_j=\frac{\beta_j}{n}$
+
+Тогда статистика:
+
+$$
+\chi^2_H = \sum^n_{i=1}\sum^m_{j=1}\left(\frac{(\nu_{ij}-n\hat p\hat q)^2}{n\hat p \hat q} \right) = \sum^n_{i=1}\sum^m_{j=1}\left(\frac{(\nu_{ij}-\frac{\alpha_i\beta_i}{n})^2}{\frac{\alpha_i\beta_i}{n}} \right)
+$$
+
+Если $H_0$ - верна, т. е. $\mathbb P\left(X \in A_{j}; Y \in B_i \right) = \mathbb P\left(X \in A_j \right)\cdot \mathbb P \left(Y \in B_i \right)$, то $\chi^2_H \rightarrow^d \chi^2((k-1)(m-1))$
+
+$$
+k_{\alpha} = \{\vec{X} \in \mathbb R^n | \chi^2_H > \chi^2_{\alpha}((k-1)(m-1)) \}
+$$
+
+2) $chi^2_H = n\cdot \left(\frac{a^2}{(a+c)(a+b)}+\frac{b^2}{(b+d)(a+b)}+\frac{c^2}{(a+c)(c+d)}+\frac{d^2}{(b+d)(c+d)}-1 \right) = \{\text{ решим уравнение с помощью библиотеки sympy } \} = \frac{n(ad-bc)^2}{(a+b)(a+c)(b+d)(c+d)}$
+from sympy.abc import a,b,c,d,n
+from sympy import expand, simplify, collect, factor
+
+d = n*(a**2/((a+c)*(a+b))+b**2/((b+d)*(a+b))+c**2/((a+c)*(c+d))+d**2/((b+d)*(c+d)))
+d = expand(d)
+d
+"""))
+
+def solve_another_strange_number_1():
+    display(Markdown(r"""
+Статистической гипотезой называется любое утверждение о виде или параметрах генерального
+распределения. 
+
+Статистическая гипотеза называется параметрической, если она основана на предположении, что генеральное распределение известно с точностью до конечного числа параметров.   
+
+Параметрическая гипотеза называется простой, если она имеет вид: $\theta = \theta_0$ , где $\theta_0$ – некоторое фиксированное начение параметра . Гипотеза вида:$\theta \in \Theta $ где $\Theta$  – какое-либо множество, содержащее, по меньшей мере, два различных элемента, называется сложной.
+
+
+H0 - основная гипотеза H1- альтернативная гипотеза 
+
+$ K_\alpha $ -критичесая область $ K_\alpha \in R^n$
+
+$ T(X_1,..X_n)$ - статистка критерия
+
+Гипотеза H0 отвергается, если $ T(X_1,..X_n) \in R^n $ и принимается, если $ T(X_1,..X_n) \notin R^n $. Критические области обычно задаются как односторонние или двусторонние.
+
+$ K_\alpha = \{(X_1,..X_n) \in R^n : T(X_1,..X_n)<c_1\} $  
+$ K_\alpha = \{(X_1,..X_n) \in R^n : T(X_1,..X_n)>c_2\} $  
+$ K_\alpha = \{(X_1,..X_n) \in R^n : T(X_1,..X_n)<c_1 \cup  T(X_1,..X_n)<c_1 \}  $  
+
+$ c_1 и c_2 $ - критические значения  
+
+Если H0-верна, но отвергается, то это ошибка I рода. Вероятность этой ошибки назывется уровнем знчимости $\alpha$   
+
+Если H1-верна, но отвергается, то это ошибка II рода. Вероятность этой ошибки  $\beta; W = 1 - \beta$ - мощбность критерия  
+
+Схема:  
+1) Сформировать Н0, H1, $\alpha$  
+2) Найти $ c_1 ; c_2 ; K_\alpha $  
+3) Вычислить $ T(X_1,..X_n)$ и проверить, что $ T(X_1,..X_n) \in K_\alpha $  
+4) Сделать вывод
+    """))
+
+def solve_another_strange_number_2():
+    display(Markdown(r"""
+1) Пусть $ X \sim Norm(\theta, \sigma^2)$  
+$ H0 = \theta_0$  
+$ H1 = \theta_1$  
+$ \theta_1 > \theta_0 \Rightarrow  K_\alpha \in (c_\alpha;+\infty)$  
+Eсли H0 - верна то $ \bar{X} \sim  Norm(\theta, \frac{\sigma^2}{n})$  
+$\alpha = P(\bar{X}>c_\alpha) = 1 - P(\bar{X} \leq c_\alpha) = 1 - P(\frac{\bar{X}-\theta_0}{\sigma}\sqrt{n} \leq \frac{c_\alpha-\theta_0}{\sigma}\sqrt{n}) = \{ \frac{\bar{X}-\theta_0}{\sigma}\sqrt{n} \sim Norm(0,1) \} = 1 - F_z(\sqrt{n}\frac{c_\alpha-\theta_0}{\sigma})$  
+$F^{-1}_\alpha(1-\alpha) = \sqrt{n}\frac{c_\alpha-\theta_0}{\sigma}$  
+$ Z_{1-\alpha}=\sqrt{n}\frac{c_\alpha-\theta_0}{\sigma}$  
+$c_\alpha = \theta_0 + Z_{1-\alpha}\frac{\sigma}{\sqrt{n}}$  
+2) Если $\alpha$ - веротянотсь ошибки I рода - $P(\bar{X} > c_\alpha)$ - вероятнотсь попадания в $ K_\alpha$  
+3) Если $\bar{X}<c_\alpha$, мы не отвргаем H0 и при это H1 верно, то мы соврешаем ошибку II рода $\beta = P_{H1}=(\bar{X}<c_\alpha)-P(\frac{\bar{X}-\theta_1}{\sigma}\sqrt{n} \leq \frac{c_\alpha-\theta_1}{\sigma}\sqrt{n}) =\{ \frac{\bar{X}-\theta_1}{\sigma}\sqrt{n} \sim Norm(0,1) \} = F_z(\frac{c_\alpha-\theta_1}{\sigma})\sqrt{n}$  
+Вероятноть попадания  в R \ $K_\alpha$   
+
+4) $\alpha + \beta \rightarrow \min$  
+$ f = 1 - F_Z(\frac{c_\alpha - \theta_0}{\sigma}\sqrt{n}) + F_z(\frac{c_\alpha - \theta_1}{\sigma}\sqrt{n}) =  1 - F_Z(Z_{1-\alpha}) + F_Z(Z_{1-\alpha}+ \frac{\theta_0-\theta_1}{\sigma}\sqrt{n}) = \{ \frac{\theta_0-\theta_1}{\sigma}\sqrt{n} = a \} = 1 - F_Z(Z_{1-\alpha})+F_Z(Z_{1-\alpha}+a)$ Переменная здесь $ Z_{1-\alpha}=Z$
+
+
+$ f'_z = -\phi(Z) + \phi(Z+a)= 0$  
+$ \phi(Z)  = \phi(Z+a) ,$ где $\phi(x)=\frac{1}{\sqrt{2\pi}}\exp^{\frac{-x^2}{2}}$  
+$ \frac{1}{\sqrt{2\pi}}\exp^{\frac{-(Z+\alpha)^2}{2}} = \frac{1}{\sqrt{2\pi}}\exp^{\frac{-(Z)^2}{2}}$ 
+
+
+$ (Z+\alpha)^2 = Z^2$  
+$ (Z + \alpha -Z)(Z + \alpha +Z) =0$  
+$ Z=\frac{-\alpha}{2}$  
+$ Z_{1-\alpha} = \frac{-\alpha}{2}$  
+
+
+$ \frac{c_\alpha-\theta_0}{\sigma}\sqrt{n} = -\frac{\theta_0-\theta_1}{1\sigma}\sqrt{n}$
+
+$c_\alpha = \frac{\theta_1-\theta_0}{2}+\theta_0 = \frac{\theta_1+\theta_0}{2}$
+
+Для данной ситуации $\alpha + \beta \rightarrow \min$ если $c_\alpha = \frac{\theta_1+\theta_0}{2}$
+    """))
+
+def solve_another_strange_number_3():
+    display(Markdown(r"""
+1) Критерий назывется несмещенным, если  $W(\theta)\geq\alpha,  \forall  \theta \in \Theta_1 $ т.е правильно еотверждение Н0 не менее вероятно чем неправильное  
+
+2) Критерий назывется состоятельным, если $ \forall  \theta \in \Theta_1 , W(\theta) \longrightarrow 1,$ при $n \rightarrow \infty$
+
+3) $ W(\mu) = \frac{1}{2}-\Phi_0(z_\alpha - \frac{\sqrt{n}}{\sigma}(\mu-\mu_0)), \mu \in (\mu_0; +\infty)    $ Проверим, что $W(\mu)  \leq \alpha$ 
+
+$\frac{1}{2} -\Phi_0(z_\alpha - \frac{\sqrt{n}}{\sigma}(\mu-\mu_0)) \leq \alpha $  
+$\Phi_0(z_\alpha - \frac{\sqrt{n}}{\sigma}(\mu-\mu_0)) \leq \frac{1}{2} - \alpha | + \frac{1}{2} $   
+$\frac{1}{2} + \Phi_0(z_\alpha - \frac{\sqrt{n}}{\sigma}(\mu-\mu_0)) \leq 1 - \alpha $
+
+$F_z(z_\alpha - \frac{\sqrt{n}}{\sigma}(\mu-\mu_0)) \leq 1 - \alpha)$  
+
+$\{P(Z >Z_\alpha) = 1 - F_z(Z_\alpha)=\alpha$  
+$ F_z(Z_\alpha) = 1-\alpha$  
+$ Z_\alpha = F^{-1}_Z(1-\alpha)\}$
+
+
+$F_z(z_\alpha - \frac{\sqrt{n}}{\sigma}(\mu-\mu_0)) \leq 1 - \alpha) |F^{-1}_Z$
+
+$ z_\alpha - \frac{\sqrt{n}}{\sigma}(\mu-\mu_0)  \leq z_\alpha $
+
+$ z_\alpha - z_\alpha \leq\frac{\sqrt{n}}{\sigma}(\mu-\mu_0)  $
+
+$ 0 \leq \frac{\sqrt{n}}{\sigma}(\mu-\mu_0) | :\frac{\sqrt{n}}{\sigma} $
+
+$ 0 \leq \mu-\mu_0 $  
+
+$\mu_0 \leq \mu$ - вернно $ \forall \mu \in (\mu_0; +\infty) \Rightarrow $ критерий несмещенный
+
+
+Проверим что $ W(\theta) \longrightarrow 1,$ при $n \rightarrow \infty$
+
+$ \lim\limits_{n\to\infty}(\frac{1}{2}-\Phi_0(z_\alpha - \frac{\sqrt{n}}{\sigma}(\mu-\mu_0)) =  \frac{1}{2}-\lim\limits_{n\to\infty}(\Phi_0(z_\alpha - \frac{\sqrt{n}}{\sigma}(\mu-\mu_0)) = $
+
+$ \{-\frac{\sqrt{n}}{\sigma}(\mu-\mu_0)) \longrightarrow +\infty \}$
+
+$ = \frac{1}{2} - \frac{1}{\sqrt{2\pi}} \int_{0}^{-\infty} \exp^{\frac{-x^2}{2}}dx = \frac{1}{2} - (-\frac{1}{2}) = 1 \Rightarrow  $ критерий состоятельнй
+    """))
+
+def solve_another_strange_number_4():
+    display(Markdown(r"""
+Лемма Неймана-Пирсона - Наиболее мощьный критерий проверки Н0 против Н1 существует и имеет критическую область $$ K_\alpha = \{(x_1,...,x_n) | \frac{\prod_{i=1}^n f(x_1,\theta_1)}{\prod_{i=1}^n f(x_1,\theta_0)}  \geq c \}$$
+
+$T(\overrightarrow{X}) =  \frac{\prod_{i=1}^n f(x_1,\theta_1)}{\prod_{i=1}^n f(x_1,\theta_0)}$ - статистика правдоподобия  
+
+II) Пусть $ X = (X_1,..,X_n)$ - выборка обьема n 
+
+$ X_1  \thicksim Norm(\theta, \sigma^2)  $  
+
+$ H0 : \theta = \theta_0$  
+$ H1 : \theta = \theta_1  ;  \theta_1> \theta_0 $ 
+
+$\theta$ - неизвестно, $\sigma^2$ - известа  
+
+   1) Рассмотрим $$ T(X_1,...,X_n) = \frac{\prod_{i=1}^n f(x_1,\theta_1)}{\prod_{i=1}^n f(x_1,\theta_0)}= \frac{\prod_{i=1}^n\frac{1}{\sigma\sqrt{2\pi}}\exp^{-\frac{(X_i-\theta_1)^2}{2\sigma^2}}}{\prod_{i=1}^n \frac{1}{\sigma\sqrt{2\pi}}\exp^{-\frac{(X_i-\theta_0)^2}{2\sigma^2}}} = \exp ^{\sum_{i=1}^n [- \frac{X_i-\theta_1)^2}{2\sigma^2} + \frac{X_i-\theta_0)^2}{2\sigma^2}]}=$$
+
+$$ = \exp^{\frac{1}{2\sigma^2}\sum_{i=1}^n(-(X_i)^2+2X-i\theta_1-(\theta_1)^2+(X_i)^2-2X_i\theta_0+(\theta_0)^2)} = \exp^{\frac{1}{2\sigma^2}\sum_{i=1}^n(2X_i(\theta_1-\theta_0)+(\theta_0-\theta_1)^2)} = \exp^{\frac{\theta_1-\theta_0}{\sigma^2}\bar{X}n+\frac{(\theta_0)^2-(\theta_1)^2}{\sigma^2}n}$$
+
+
+$$ 2) K_\alpha = \{ \overrightarrow{x} \in R^n | T(x) > c \} = \{\bar{x} \in R^n |\exp^{\frac{\theta_1-\theta_0}{\sigma^2}\bar{X}n+\frac{(\theta_0)^2-(\theta_1)^2}{\sigma^2}n} >c\} = \{\bar{x} \in R^n | \frac{\theta_1-\theta_0}{\sigma^2}\bar{X}n+\frac{(\theta_0)^2-(\theta_1)^2}{\sigma^2}n > \ln{c} \} = \{ \bar{x} \in R^n | \bar{X} > \frac{2\sigma^2\ln{c}-(\theta_0^2-\theta_1^2)n}{2\sigma^2}\cdot\frac{\sigma^2}{(\theta_0-\theta_1)n} \} $$  
+
+
+3) $K_\alpha$ определяется так: $  K_\alpha = \{\bar{x} \in R^n |\bar{x} > \frac{\sigma}{\sqrt{n}} z_\alpha+\theta_0\}$ 
+
+$$ \frac{\theta_1+\theta_0}{2} + \frac{\sigma^2\ln{c}}{(\theta_1-\theta_0)n} = \frac{\sigma}{\sqrt{n}} z_\alpha+\theta_0$$
+
+
+$$ \ln(c) = \frac{z_\alpha(\theta_1-\theta_0)\sqrt{n}}{\sigma}+\frac{n(\theta_0^2-\theta_1^2)}{2\sigma^2}$$
+
+
+$$ c = \exp(\frac{z_\alpha(\theta_1-\theta_0)\sqrt{n}}{\sigma}+\frac{n(\theta_0^2-\theta_1^2)}{2\sigma^2}) $$
+
+При выборе такого с области эквивалентны, следовательно критерий наиболее мощный
+    """))
+
+def solve_another_strange_number_5():
+    display(Markdown(r"""
+1) Выберем Z-статистику: $ Z = \frac{\bar{X}-\mu_0}{\sigma}\sqrt{n}$  
+
+Критическое множество: $ K_\alpha = \{\bar{X} \in R^n | \frac{\bar{X}-\mu_0}{\sigma}\sqrt{n} > Z_\alpha\}$  
+
+Где $Z_\alpha$ такое число, что $P(Z>Z_\alpha) = \alpha; Z \sim Norm(0,1)$  
+
+2) 1. Если Н0 верна, то $ Z \sim Norm(0,1) $ 
+
+Док-во $ \frac{\sqrt{n}}{\sigma}(\bar{X}-\mu_0)$ -сумма нормальный распределений нормальное распределение 
+
+$ E[\frac{\sqrt{n}}{\sigma}(\bar{X}-\mu_0)] =\frac{\sqrt{n}}{\sigma}(E[\frac{1}{n}\sum^n_{i=1}(X_i)]-\mu_0) = \frac{\sqrt{n}}{\sigma}(\mu_0-\mu_0) = 0 $ 
+
+$Var(\frac{\sqrt{n}}{\sigma}(\bar{X}-\mu_0)) = \frac{n}{\sigma^2}Var(\frac{1}{n}\sum^n_{i=1}X_i - \mu_0) =\frac{n}{\sigma^2} \frac{\sum^n_{i=1}X_i}{n^2} = 1 $ (в силу независимости)  
+
+2. $ Z \sim Norm(0,1)$, тогда $ K_\alpha = \{\bar{X} \in R^n | Z>Z_\alpha \} $  
+
+Док-во $ P(\frac{\bar{X}-\mu_0}{\sigma}\sqrt{n} > Z_\alpha)$ (если Н0 - верна) $ P(Z>Z_\alpha)=\{Z \sim Norm(0,1) \} = \alpha$ 
+
+3) $Pvalue = P(Z>Z_{набл}) = 1 - P(Z \leq Z_{набл}) = 1 - (\frac{1}{2}+ \Phi_0(Z_{набл})) = \frac{1}{2} - \Phi_0(\frac{\bar{X}-\mu_0}{\sigma}\sqrt{n}) $, где $\Phi_0$ - Функция Лапласа
+    """))
+
+def solve_another_strange_number_6():
+    display(Markdown(r"""
+1) Выберем Z-статистику: $ Z = \frac{\bar{X}-\mu_0}{\sigma}\sqrt{n}$  
+
+Критическое множество: $ K_\alpha = \{\bar{X} \in R^n | \frac{\bar{X}-\mu_0}{\sigma}\sqrt{n} < -Z_\alpha\}$  
+
+Где $Z_\alpha$ такое число, что $P(Z>Z_\alpha) = \alpha; Z \sim Norm(0,1)$  
+
+2) 1. Если Н0 верна, то $ Z \sim Norm(0,1) $ 
+
+Док-во $ \frac{\sqrt{n}}{\sigma}(\bar{X}-\mu_0)$ -сумма нормальный распределений нормальное распределение 
+
+$ E[\frac{\sqrt{n}}{\sigma}(\bar{X}-\mu_0)] =\frac{\sqrt{n}}{\sigma}(E[\frac{1}{n}\sum^n_{i=1}(X_i)]-\mu_0) = \frac{\sqrt{n}}{\sigma}(\mu_0-\mu_0) = 0 $ 
+
+$Var(\frac{\sqrt{n}}{\sigma}(\bar{X}-\mu_0)) = \frac{n}{\sigma^2}Var(\frac{1}{n}\sum^n_{i=1}X_i - \mu_0) =\frac{n}{\sigma^2} \frac{\sum^n_{i=1}X_i}{n^2} = 1 $ (в силу независимости)   
+
+2. $ Z \sim Norm(0,1)$, тогда $ K_\alpha = \{\bar{X} \in R^n | Z<-Z_\alpha\}$  
+
+Док-во $ P(\frac{\bar{X}-\mu_0}{\sigma}\sqrt{n} < Z_\alpha)$ (если Н0 - верна) $= P(Z< -Z_\alpha)= \{Z \sim Norm(0,1) \} = 1 - P(Z>-Z_\alpha)= \{-Z_\alpha = Z_{1-\alpha}\} = 1 - P(Z>Z_{1-\alpha}) = 1 - (1-\alpha) = \alpha$  
+
+3) $Pvalue = P(T(X_1,.., X_n)<Z_{набл}) = P(Z<Z_{набл})  = \frac{1}{2} + \Phi_0(\frac{\bar{X}-\mu_0}{\sigma}\sqrt{n}) $, где $\Phi_0$ - Функция Лапласа
+
+
+    """))
+
+def solve_another_strange_number_7():
+    display(Markdown(r"""
+1) Выберем Z-статистику: $ Z = \frac{\bar{X}-\mu_0}{\sigma}\sqrt{n}$  
+
+Критическое множество: $ K_\alpha = \{\bar{X} \in R^n | \left\lvert\frac{\bar{X}-\mu_0}{\sigma}\sqrt{n}\right\rvert < Z_{\frac{\alpha}{2}}\}$  
+
+Где $Z_\alpha$ $ - процентная точка стандартоного норального распределения  
+
+2) 1. Если Н0 верна, то $ Z \sim Norm(0,1) $ 
+
+Док-во $ \frac{\sqrt{n}}{\sigma}(\bar{X}-\mu_0)$ -сумма нормальный распределений нормальное распределение 
+
+$ E[\frac{\sqrt{n}}{\sigma}(\bar{X}-\mu_0)] =\frac{\sqrt{n}}{\sigma}(E[\frac{1}{n}\sum^n_{i=1}(X_i)]-\mu_0) = \frac{\sqrt{n}}{\sigma}(\mu_0-\mu_0) = 0 $ 
+
+$Var(\frac{\sqrt{n}}{\sigma}(\bar{X}-\mu_0)) = \frac{n}{\sigma^2}Var(\frac{1}{n}\sum^n_{i=1}X_i - \mu_0) =\frac{n}{\sigma^2} \frac{\sum^n_{i=1}X_i}{n^2} = 1 $ (в силу независимости)   
+
+2. $ P(\frac{\bar{X}-\mu_0}{\sigma}\sqrt{n} \in K_\alpha) = \alpha $  
+
+$ P(\left\lvert\frac{\bar{X}-\mu_0}{\sigma}\sqrt{n}\right\rvert < Z_{\frac{\alpha}{2}}) = P_{H0}(Z> Z_{\frac{\alpha}{2}}) + P_{H0}(Z < -Z_{\frac{\alpha}{2}}) = \frac{\alpha}{2} + 1  - P_{H0}(Z>Z_{1-\frac{\alpha}{2}}) = \frac{\alpha}{2} + 1  - 1 + \frac{\alpha}{2} = \alpha$   
+
+3) $Pvalue = 2\min(P(Z>Z_{набл},P(Z>Z_{набл})) = 2\min(1-P(Z \leq Z_{набл}), P(Z<Z_{набл})) = 2min(\frac{1}{2}-\Phi_0(\frac{\bar{X}-\mu_0}{\sigma}\sqrt{n}), \Phi_0(\frac{\bar{X}-\mu_0}{\sigma}\sqrt{n}) $
+
+    """))
+
+def solve_another_strange_number_8():
+    display(Markdown(r"""
+1) Рассмотрим статистику $T(X_1,...,X_n) = T = \frac{\bar X - \mu_0}{S}\sqrt{n}$, где $S=\sqrt{S^2}, S^2=\frac{1}{n-1}\sum^n_{i=1}(X_i-\bar X)^2$
+
+Тогда:
+
+$
+k_{\alpha} = \{\vec{X} \in \mathbb R^n ||T(X_1,...,X_n)|>t_{\alpha}(n-1) \}, \text{ где } t_{\alpha} - \text{ процентная точка распределения Стьюдента с } n-1 \text{ степенью свободы. }
+$ 
+
+
+2) $\frac{\bar X - \mu_0}{S}\sqrt{n} \sim T(n-1)$ - распределение стьюдента, если $H_0$ - верна.
+
+Док-во:
+
+$
+\frac{\bar X - \mu_0}{S}\sqrt{n} = \frac{\frac{\bar X - \mu_0}{\sigma}\sqrt{n}}{\frac{\sqrt{S^2}}{\sigma}} = \frac{\frac{\bar X-\mu_0}{\sigma}}{\sqrt{\frac{(n-1)S^2}{\sigma}}\frac{1}{n-1}} = \{Z \sim Norm(0,1), \text{ Если H0 - верна } \} = \frac{Z}{\sqrt{\frac{\chi^2(n-1)}{n-1}}} =^{def} T\sim T(n-1)
+$  
+
+
+$k_{\alpha} = \{|T(X_1,...,X_n)| > t_{\alpha}(n-1) \}$
+
+Док-во: Если Н0 верна, то $\frac{\bar X - \mu_0}{\sigma}\sqrt{n}\sim T(n-1)$  
+
+$
+\mathbb P\left(T(X_1,...,X_n) \in k_{\alpha} \right) = \mathbb P\left(\frac{\bar X - \mu_0}{\sigma}\sqrt{n} > t_{\alpha}(n-1) \right) = \mathbb P\left(T > t_{\alpha}(n-1) \right) =  \alpha
+$ 
+
+
+3)  $Pvalue = P(T(X_1,...,X_n)>t_{набл}) = P(\frac{\bar X - \mu_0}{S}\sqrt{n} > \frac{\bar X - \mu_0}{\sigma}\sqrt{n}) = \{ \frac{\bar X - \mu_0}{S}\sqrt{n} \sim T(n-1)\} = P(T > \frac{\bar X - \mu_0}{S}\sqrt{n}) = 1 - F_{t(n-1)}(\frac{\bar X - \mu_0}{S}\sqrt{n})  $ 
+    """))
+
+def solve_another_strange_number_9():
+    display(Markdown(r"""
+1) Рассмотрим статистику $T(X_1,...,X_n) = T = \frac{\bar X-\mu_0}{S}\sqrt{n}$
+
+где $S = \sqrt{S^2}, S^2 = \frac{1}{n-1}\sum^n_{i=1}(X_i-\bar{X})^2$
+
+Тогда $k_{\alpha}=\{\vec{X} \in \mathbb R^n | T(X_1,...,X_n) < t_{1-\alpha}(n-1) \}$, где $t_{\alpha}$ - процентная точка распределения стьюдента с n-1 степенью свободы
+
+2) $\frac{\bar X - \mu_0}{S}\sqrt{n} \sim T(n-1)$ - распределение стьюдента, если $H_0$ - верна.
+
+Док-во:
+
+$$
+\frac{\bar X - \mu_0}{S}\sqrt{n} = \frac{\frac{\bar X - \mu_0}{\sigma}\sqrt{n}}{\frac{\sqrt{S^2}}{\sigma}} = \frac{\frac{\bar X-\mu_0}{\sigma}}{\sqrt{\frac{(n-1)S^2}{\sigma}}\frac{1}{n-1}} = \{Z \sim Norm(0,1), \text{ Если H0 - верна } \} = \frac{Z}{\sqrt{\frac{\chi^2(n-1)}{n-1}}} =^{def} T\sim T(n-1)
+$$
+
+$k_{\alpha} = \{T(X_1,...,X_n)<t_{1-\alpha}(n-1) \}$
+
+Док-во: Если H0 верна, то $\frac{\bar X - \mu_0}{\sigma}\sqrt{n}\sim T(n-1)$
+
+$$
+\mathbb P\left(T(X_1,...,X_n) \in k_{\alpha} \right) = \mathbb P \left(\frac{\bar X - \mu_0}{\sigma}\sqrt{n} < t_{1-\alpha}(n-1) \right) = \mathbb P\left(T<t_{1-\alpha}(n-1) \right) = 1 - \mathbb P\left(T>t_{1-\alpha}(n+1) \right) = 1-1+\alpha=\alpha
+$$
+
+3) $Pvalue = \mathbb P \left(T(X_1,...,X_n) < t_{набл} \right) = \mathbb P\left(\frac{\bar X-\mu_0}{S}\sqrt{n}<\frac{\bar X - \mu_0}{\sigma}\sqrt{n} \right) = \mathbb P(T<\frac{\bar X-\mu_0}{S}\sqrt{n}) = \mathbb F_{t(n-1)}(\frac{\bar X-\mu_0}{S}\sqrt{n})$
+    """))
+
+def solve_another_strange_number_10():
+    display(Markdown(r"""
+1) Рассмотрим статистику $T(X_1,...,X_n) = T = \frac{\bar X - \mu_0}{S}\sqrt{n}$, где $S=\sqrt{S^2}, S^2=\frac{1}{n-1}\sum^n_{i=1}(X_i-\bar X)^2$
+
+Тогда:
+
+$
+k_{\alpha} = \{\vec{X} \in \mathbb R^n ||T(X_1,...,X_n)|>t_{\frac{\alpha}{2}}(n-1) \}, \text{ где } t_{\alpha} - \text{ процентная точка распределения Стьюдента с } n-1 \text{ степенью свободы. }
+$
+
+2) $\frac{\bar X - \mu_0}{S}\sqrt{n} \sim T(n-1)$ - распределение стьюдента, если $H_0$ - верна.
+
+Док-во:
+
+$
+\frac{\bar X - \mu_0}{S}\sqrt{n} = \frac{\frac{\bar X - \mu_0}{\sigma}\sqrt{n}}{\frac{\sqrt{S^2}}{\sigma}} = \frac{\frac{\bar X-\mu_0}{\sigma}}{\sqrt{\frac{(n-1)S^2}{\sigma}}\frac{1}{n-1}} = \{Z \sim Norm(0,1), \text{ Если H0 - верна } \} = \frac{Z}{\sqrt{\frac{\chi^2(n-1)}{n-1}}} =^{def} T\sim T(n-1)
+$
+
+$k_{\alpha} = \{|T(X_1,...,X_n)| > t_{\frac{\alpha}{2}}(n-1) \}$
+
+Док-во: Если Н0 верна, то $\frac{\bar X - \mu_0}{\sigma}\sqrt{n}\sim T(n-1)$
+
+$
+\mathbb P_{H_0}\left(T(X_1,...,X_n) \in k_{\alpha} \right) = \mathbb P_{H_0}\left(|\frac{\bar X - \mu_0}{\sigma}\sqrt{n}| > t_{\frac{\alpha}{2}}(n-1) \right) = \mathbb P\left(|T| > t_{\frac{\alpha}{2}}(n-1) \right) = \mathbb P\left(T<t_{1-\frac{\alpha}{2}}(n-1) \right) + \mathbb P\left(T > t_{\frac{\alpha}{2}}(n-1) \right) = \frac{\alpha}{2} + \frac{\alpha}{2} = \alpha
+$
+
+3) $Pvalue = 2min \{\mathbb P\left(T>t_{набл} \right); \mathbb P\left(T < t_{набл} \right) \} = \{\text{распределение Стьюдента имеем четкую плотность, тогда:} \} = 2min \{\mathbb P\left(T>|t_{набл}| \right);\mathbb P \left(T < -|t_{набл}| \right) \} = 2\mathbb P\left(T < -|t_{набл}| \right) = 2\mathbb F_{T(n-1)}(-|t_{набл}|)$ 
+
+
+    """))
+
+def solve_another_strange_number_11():
+    display(Markdown(r"""
+1) Рассмотрим статистику $\chi^2_0 = \frac{1}{\sigma^2_0} \sum^n_{k=1}(X_k-\mu)^2$
+
+$
+k_{\alpha} = \{\vec{X} \in \mathbb R | \chi^2_0>\chi^2_{\alpha}(n)\}, \text{ где } \chi^2_{\alpha}(n) - \text{ процентная точка уровня } \alpha \text{ для } \chi^2 \sim \chi^2(n)
+$
+
+2) Если $H_0$ - верна, то $\chi^2_0=\frac{1}{\sigma^2_0}\sum^n_{k=1}(X_k-\mu)^2 \sim \chi^2(n)$
+
+Док-во:
+
+$\chi^2_0=\frac{1}{\sigma^2_0}\sum^n_{k=1}(X_k-\mu)^2 = \sum^n_{k=1}(\frac{X_k-\mu}{\sigma})^2 = \sum^n_{k=1}\mathcal Z^2_k =^{def} \chi^2(n)$
+
+$
+\mathbb P_{H_0}\left(T(X_1,...,X_n \in k_{\alpha}) \right) = \alpha
+$
+
+$
+\mathbb P_{H_0}\left(\frac{1}{\sigma^2_0} \sum^n_{k=1}(X_k-\mu)^2 > \chi^2_{\alpha}(n) \right) = \mathbb P_{H_0}\left(\chi^2(n) > \chi^2_{\alpha}(n) \right) =^{def} = \alpha
+$
+
+3)$Pvalue = \mathbb P_{H_0}\left(T(X_1,...,X_n) > \chi^2_{набл} \right) = \mathbb P_{H_0}\left(\frac{1}{\sigma^2_0}\sum^n_{k=1}(X_k-\mu)^2>\chi^2_{набл} \right) = 1-\mathbb F_{\chi^2(n)}\left(\frac{1}{\sigma^2_0}\sum^n_{k=1}(X_k-\mu)^2\right)$
+
+
+    """))
+
+def solve_another_strange_number_12():
+    display(Markdown(r"""
+
+1) Рассмотрим статистику $\chi^2_0 = \frac{1}{\sigma^2_0} \sum^n_{k=1}(X_k-\mu)^2$
+
+$
+k_{\alpha} = \{\vec{X} \in \mathbb R | 0<\chi^2_0<\chi^2_{1-\alpha}(n)\}, \text{ где } \chi^2_{1-\alpha}(n) - \text{ процентная точка уровня } 1-\alpha \text{ для } \chi^2 \sim \chi^2(n)
+$
+
+2) Если $H_0$ - верна, то $\chi^2_0=\frac{1}{\sigma^2_0}\sum^n_{k=1}(X_k-\mu)^2 \sim \chi^2(n)$
+
+Док-во:
+
+$\chi^2_0=\frac{1}{\sigma^2_0}\sum^n_{k=1}(X_k-\mu)^2 = \sum^n_{k=1}(\frac{X_k-\mu}{\sigma})^2 = \sum^n_{k=1}\mathcal Z^2_k =^{def} \chi^2(n)$
+
+$
+\mathbb P_{H_0}\left(T(X_1,...,X_n \in k_{\alpha}) \right) = \alpha
+$
+
+$
+\mathbb P_{H_0}\left(0 < \frac{1}{\sigma^2_0}\sum^n_{k=1}(X_k-\mu)^2 <\chi^2_{1-\alpha}(n) \right) = \mathbb P_{H_0}\left(0<\chi^2(n)<\chi^2_{1-\alpha}(n) \right) = \mathbb P\left(\chi^2(n)>0 \right) - \mathbb P\left(\chi^2(n)>\chi^2_{1-\alpha}(n) \right) = 1-1+\alpha - \alpha
+$
+
+3)$Pvalue = \mathbb P_{H_0}\left(T(X_1,...,X_n) < \chi^2_{набл} \right) = \mathbb P_{H_0}\left(\frac{1}{\sigma^2_0}\sum^n_{k=1}(X_k-\mu)^2<\chi^2_{набл} \right) = \mathbb F_{\chi^2(n)}\left(\frac{1}{\sigma^2_0}\sum^n_{k=1}(X_k-\mu)^2 \right)$
+    """))
